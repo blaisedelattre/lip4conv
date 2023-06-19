@@ -8,15 +8,14 @@ import torch.nn.functional as F
 
 ###############################################################################
 
-def estimate(kernel, 
-             n=32, 
-             n_iter=5, 
-             name_func="ours", 
-             return_time=False):
+
+def estimate(kernel, n=32, n_iter=5, name_func="ours", return_time=False):
     if name_func == "ours":
         res = compute_ours(kernel, n=n, n_iter=n_iter, return_time=return_time)
     elif name_func == "ours_backward":
-        res = compute_ours_explicit_backward(kernel, n=n, n_iter=n_iter, return_time=return_time)
+        res = compute_ours_explicit_backward(
+            kernel, n=n, n_iter=n_iter, return_time=return_time
+        )
     elif name_func == "araujo2021":
         res = compute_araujo2021(kernel, n_iter=n_iter, return_time=return_time)
     elif name_func == "singla2021":
@@ -30,14 +29,13 @@ def estimate(kernel,
     return res
 
 
-def estimate_dense(weight, 
-                   n_iter=5, 
-                   name_func="ours", 
-                   return_time=False):
+def estimate_dense(weight, n_iter=5, name_func="ours", return_time=False):
     if name_func == "ours":
         res = gram_iteration_on_matrix(weight, n_iter=n_iter, return_time=return_time)
     elif name_func == "ours_backward":
-        res = gram_iteration_on_matrix_explicit_backward(weight, n_iter=n_iter, return_time=return_time)
+        res = gram_iteration_on_matrix_explicit_backward(
+            weight, n_iter=n_iter, return_time=return_time
+        )
     elif name_func == "pi":
         res = compute_pm_dense(weight, n_iter=n_iter, return_time=return_time)
     else:
@@ -50,10 +48,7 @@ def estimate_dense(weight,
 ###############################################################################
 
 
-def compute_ours(kernel, 
-                 n=None, 
-                 n_iter=4, 
-                 return_time=True):
+def compute_ours(kernel, n=None, n_iter=4, return_time=True):
     """
     ours method corresponds to Algo.1 Lip_Conv in paper
     """
@@ -89,7 +84,6 @@ def compute_ours(kernel,
 
 
 class GramIterationConvBackward(torch.autograd.Function):
-    
     @staticmethod
     def forward(ctx, rfft_kernel, n_iter):
         with torch.no_grad():
@@ -104,19 +98,20 @@ class GramIterationConvBackward(torch.autograd.Function):
                 inverse_power /= 2
 
             sqrt_Gt_norm = Gt.norm(dim=(1, 2)).pow(inverse_power) * (
-                    (inverse_power * log_curr_norm).exp()
-                )
+                (inverse_power * log_curr_norm).exp()
+            )
             max_sqrt_Gt_norm, idx = sqrt_Gt_norm.max(dim=0)
 
-            ctx.save_for_backward(rfft_kernel[idx, :, :].detach(),
-                                  Gt[idx, :,:].detach())
+            ctx.save_for_backward(
+                rfft_kernel[idx, :, :].detach(), Gt[idx, :, :].detach()
+            )
             ctx.idx = idx.item()
             ctx.norm_Gt = max_sqrt_Gt_norm.detach()
             ctx.n_iter = n_iter
             ctx.dtype = rfft_kernel.dtype
             ctx.device = rfft_kernel.device
             ctx.shape_input = rfft_kernel.shape
-            
+
             return max_sqrt_Gt_norm
 
     @staticmethod
@@ -129,14 +124,17 @@ class GramIterationConvBackward(torch.autograd.Function):
             jac = G / ctx.norm_Gt
         else:
             norm_G_sq = ctx.norm_Gt**2
-            Gdag_G =  (G.conj().t() @ G) / norm_G_sq
+            Gdag_G = (G.conj().t() @ G) / norm_G_sq
             num = G @ Gdag_G.matrix_power(2**n_iter - 1)
-            denom = Gdag_G.matrix_power(2**(n_iter -1)).norm().pow(2 - 0.5**n_iter)
-            jac = (num / denom) * norm_G_sq**(-0.5)
-        grad_input[idx, :, :] =  jac
-        return grad_output*grad_input, None
+            denom = Gdag_G.matrix_power(2 ** (n_iter - 1)).norm().pow(2 - 0.5**n_iter)
+            jac = (num / denom) * norm_G_sq ** (-0.5)
+        grad_input[idx, :, :] = jac
+        return grad_output * grad_input, None
+
 
 gram_iteration_conv_backward = GramIterationConvBackward.apply
+
+
 def compute_ours_explicit_backward(kernel, n, n_iter=4, return_time=False):
     """
     Lip_conv Algo.1 with explicit bacward implementation
@@ -148,7 +146,7 @@ def compute_ours_explicit_backward(kernel, n, n_iter=4, return_time=False):
         cin, cout = cout, cin
     crossed_term = torch.fft.rfft2(kernel, s=(n, n))
     crossed_term = crossed_term.reshape(cout, cin, -1).permute(2, 0, 1)
-    res = gram_iteration_conv_backward (crossed_term, n_iter)
+    res = gram_iteration_conv_backward(crossed_term, n_iter)
     total_time = time.time() - start_time
     if return_time:
         return res, total_time
@@ -159,6 +157,7 @@ def compute_ours_explicit_backward(kernel, n, n_iter=4, return_time=False):
 ###############################################################################
 # Gram iteration
 ###############################################################################
+
 
 def gram_iteration_on_matrix(M, n_iter=100, n=10, eps=1e-8, return_time=True):
     """
@@ -173,7 +172,7 @@ def gram_iteration_on_matrix(M, n_iter=100, n=10, eps=1e-8, return_time=True):
     for iter in range(n_iter):
         M_norm = M.norm()
         M = M / M_norm
-        M = M.T @ M 
+        M = M.T.mm(M)
         log_curr_norm = 2 * (log_curr_norm + M_norm.log())
         inverse_power /= 2
     res = M.norm().pow(inverse_power) * ((log_curr_norm * inverse_power).exp())
@@ -194,7 +193,7 @@ class GramIterationDenseBackward(torch.autograd.Function):
             for _ in range(n_iter):
                 Gt_norm = Gt.norm()
                 Gt = Gt / Gt_norm
-                Gt = Gt.T @ Gt 
+                Gt = Gt.T.mm(Gt)
                 log_curr_norm = 2 * (log_curr_norm + Gt_norm.log())
                 inverse_power /= 2
                 sqrt_Gt_norm = Gt.norm().pow(inverse_power) * (
@@ -212,21 +211,24 @@ class GramIterationDenseBackward(torch.autograd.Function):
         if n_iter == 0:
             jac = G / ctx.norm_Gt
         elif n_iter == 1:
-            jac = G @ Gt  * ctx.norm_Gt.pow(-1.5)
+            jac = G @ Gt * ctx.norm_Gt.pow(-1.5)
         elif n_iter == 2:
-            jac = G @ Gt @  G.T @ G * ctx.norm_Gt.pow(-1.75)
+            jac = G @ Gt @ G.T @ G * ctx.norm_Gt.pow(-1.75)
         elif n_iter == 3:
             Gdag_G = G.T @ G
             jac = G @ Gt @ Gdag_G.matrix_power(3) * ctx.norm_Gt.pow(-1.875)
         else:
             norm_G_sq = ctx.norm_Gt**2
-            Gdag_G =  (G.T @ G) / norm_G_sq
+            Gdag_G = (G.T @ G) / norm_G_sq
             num = G @ Gdag_G.matrix_power(2**n_iter - 1)
-            denom = Gdag_G.matrix_power(2**(n_iter -1)).norm().pow(2 - 0.5**n_iter)
-            jac = (num / denom) * norm_G_sq**(-0.5)
-        return grad_output*jac, None
+            denom = Gdag_G.matrix_power(2 ** (n_iter - 1)).norm().pow(2 - 0.5**n_iter)
+            jac = (num / denom) * norm_G_sq ** (-0.5)
+        return grad_output * jac, None
+
 
 gram_iteration_dense_backward = GramIterationDenseBackward.apply
+
+
 def gram_iteration_on_matrix_explicit_backward(M, n_iter=100, return_time=True):
     """
     Algo.4 Lip_Dense with explicit backward implementation
@@ -324,7 +326,7 @@ def estimate_singla2021(conv_filter, n_iter=50, return_time=True, device="cuda")
 
     min_norm = math.sqrt(h * w) * (
         torch.min(torch.min(torch.min(sigma1, sigma2), sigma3), sigma4)
-        #torch.min(sigma1, sigma2, sigma3, sigma4)  #TODO
+        # torch.min(sigma1, sigma2, sigma3, sigma4)  #TODO
     )
     total_time = time.time() - start_time
 
@@ -339,8 +341,8 @@ def estimate_singla2021(conv_filter, n_iter=50, return_time=True, device="cuda")
 ###############################################################################
 
 
-def compute_araujo2021(kernel, n_iter=50, *, padding=0, cuda=True, return_time=True):  
-    """    code taken from
+def compute_araujo2021(kernel, n_iter=50, *, padding=0, cuda=True, return_time=True):
+    """code taken from
     https://github.com/MILES-PSL/Upper-Bound-Lipschitz-Convolutional-Layers/blob/master/lipschitz_bound/lipschitz_bound.py
 
     Compute the LipGrid Algo with Torch
@@ -399,12 +401,12 @@ def compute_araujo2021(kernel, n_iter=50, *, padding=0, cuda=True, return_time=T
     poly = poly1 + poly2
     sv_max = torch.sqrt(poly.max())
     d = (ksize - 1) / 2
-    denom = (1 - (2 * d) / sample)
-    if denom: 
+    denom = 1 - (2 * d) / sample
+    if denom:
         alpha = 1 / denom
     else:
         alpha = 1
-    res =  alpha * sv_max
+    res = alpha * sv_max
     total_time = time.time() - start_time
     if return_time:
         return res, total_time
@@ -417,7 +419,7 @@ def compute_araujo2021(kernel, n_iter=50, *, padding=0, cuda=True, return_time=T
 ###############################################################################
 
 
-def compute_sedghi_2019( kernel, n=None, n_iter=None, return_time=True):  
+def compute_sedghi_2019(kernel, n=None, n_iter=None, return_time=True):
     """
     code adapted from
     https://github.com/brain-research/conv-sv/blob/master/conv2d_singular_values.py
@@ -438,15 +440,13 @@ def compute_sedghi_2019( kernel, n=None, n_iter=None, return_time=True):
 #  Ryu2019
 ###############################################################################
 
+
 def normalize(arr):
     norm = torch.sqrt((arr**2).sum())
     return arr / (norm + 1e-12)
 
-def compute_ryu_2019(kernel, 
-                     n, 
-                     n_iter=100, 
-                     eps=1e-8, 
-                     return_time=True):
+
+def compute_ryu_2019(kernel, n, n_iter=100, eps=1e-8, return_time=True):
     """
     Ryu2019 and Farnia2019
     adapted from https://github.com/uclaopt/Provable_Plug_and_Play/blob/master/model/Spectral_Normalize.py
@@ -477,6 +477,7 @@ def compute_ryu_2019(kernel,
 ###############################################################################
 # Power method
 ###############################################################################
+
 
 def compute_pm_dense(M, n_iter=50, n=10, eps=1e-8, return_time=True):
     """Compute the largest singular value with a small number of

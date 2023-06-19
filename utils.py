@@ -1,4 +1,3 @@
-
 def get_n_iter_epoch(epoch):
     if epoch < 125:
         return 3

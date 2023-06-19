@@ -3,7 +3,9 @@ from itertools import product
 import os
 from trainer import Trainer
 from parser import parse, get_name
-os.environ["DATADIR"] = "./data" 
+
+os.environ["DATADIR"] = "./data"
+
 
 def main():
     args = parse()
@@ -14,6 +16,7 @@ def main():
     print("args", args)
     trainer = Trainer(args)
     trainer()
-    
+
+
 if __name__ == "__main__":
     main()
