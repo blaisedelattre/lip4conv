@@ -1,9 +1,20 @@
-# READ ME
+# Efficient Bound of Lipschitz Constant for Convolutional Layers by Gram Iteration
 
-Code for different spectral norm bounds is in `lip_conv/bounds.py`
+This repository contains the code for the paper [Efficient Bound of Lipschitz Constant for Convolutional Layers by Gram Iteration](https://arxiv.org/abs/2305.16173) by Blaise Delattre, Quentin Barthélemy, Alexandre Araujo and Alexandre Allauzen.
 
-Find in jupyter notebook `note_book_test_gram_iteration.ipynb` some examples of spectral norm bound computations for different methods on dense and convolutional layers.
+Gram iteration is a deterministic method to compute spectral norm in super linear convergence. It exhibits SOTA results on GPU regarding spectral norm computations.
 
-To launch a training with default configuration run : 
+## This repository
 
-`python train_local.py --bound ours_backward --bound_n_iter 6 --lr 0.1 --r 0.1`
+### Outline
+* `bounds.py` contains code for different spectral norm bounds. 
+
+* `note_book_test_gram_iteration.ipynb` contains some examples of spectral norm bound computations for different methods on dense and convolutional layers.
+
+* `train_local.py` contains code to launch a training. Start a default configuration run  `python train_local.py --bound ours_backward --bound_n_iter 6 --lr 0.1 --r 0.1`
+
+## Installation
+
+Experiences were done using pytorch-cuda=11.7
+
+`git clone https://github.com/blaisedelattre/lip4conv.git`
