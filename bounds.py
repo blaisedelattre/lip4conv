@@ -22,6 +22,8 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
         Convolutional filter.
     n_iter : int, default=50
         Number of iterations.
+    name_func : string, default="ours"
+        Name of the method.
     return_time : bool, default True
         Return computational time.
 
@@ -53,20 +55,43 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
     return sigma
 
 
-def estimate_dense(weight, n_iter=5, name_func="ours", return_time=False):
+def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
+    """Estimate spectral norm of dense layer with a specific method.
 
-    if name_func == "ours":
-        res = gram_iteration_on_matrix(weight, n_iter=n_iter, return_time=return_time)
-    elif name_func == "ours_backward":
-        res = gram_iteration_on_matrix_explicit_backward(
-            weight, n_iter=n_iter, return_time=return_time
+    From a matrix, this function estimates the spectral norm, ie the largest
+    singular value, of the dense layer.
+
+    Parameters
+    ----------
+    X : ndarray, shape (dim0, dim1)
+        Matrix.
+    n_iter : int, default=5
+        Number of iterations.
+    name_func : string, default="ours"
+        Name of the method.
+    return_time : bool, default True
+        Return computational time.
+
+    Returns
+    -------
+    sigma : float
+        Largest singular value.
+    time : float
+        If `return_time` is True, it returns the computational time.
+    """
+
+    if name_func in ["ours", "gi"]:
+        sigma = gram_iteration_on_matrix(X, n_iter=n_iter, return_time=return_time)
+    elif name_func in ["ours_backward", "gi_backward"]:
+        sigma = gram_iteration_on_matrix_explicit_backward(
+            X, n_iter=n_iter, return_time=return_time
         )
     elif name_func == "pi":
-        res = compute_pm_dense(weight, n_iter=n_iter, return_time=return_time)
+        sigma = compute_pm_dense(X, n_iter=n_iter, return_time=return_time)
     else:
         print(name_func, "method not implemented")
 
-    return res
+    return sigma
 
 
 ###############################################################################
@@ -84,7 +109,7 @@ def compute_delattre2023(X, n=None, n_iter=4, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
-    n_iter : int, default=50
+    n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
         Return computational time.
@@ -96,9 +121,9 @@ def compute_delattre2023(X, n=None, n_iter=4, return_time=True):
     time : float
         If `return_time` is True, it returns the computational time.
     """
-    cout, cin, kernel_size, _ = X.shape
+    cout, cin, k, _ = X.shape
     if n is None:
-        n = kernel_size
+        n = k
     if cin > cout:
         X = X.transpose(0, 1)
         cin, cout = cout, cin
@@ -190,7 +215,7 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
-    n_iter : int, default=50
+    n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
         Return computational time.
@@ -202,7 +227,7 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     time : float
         If `return_time` is True, it returns the computational time.
     """
-    cout, cin, kernel_size, _ = kernel.shape
+    cout, cin, _, _ = kernel.shape
     start_time = time.time()
     if cin > cout:
         kernel = kernel.transpose(0, 1)
@@ -436,9 +461,9 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
     .. [2] https://github.com/MILES-PSL/Upper-Bound-Lipschitz-Convolutional-Layers/blob/master/lipschitz_bound/lipschitz_bound.py
     """
     cout, cin, k, k2 = X.shape
-    if k != k2:  # verify the kernel is square
+    if k != k2:  # verify if kernel is square
         raise ValueError("The last 2 dim of the kernel must be equal.")
-    if not k[-1] % 2 == 1:  # verify if all kernel have odd shape
+    if not k[-1] % 2 == 1:  # verify if kernel have odd shape
         raise ValueError("The dimension of the kernel must be odd.")
     device = X.device
     n_sample = n_iter
