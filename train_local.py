@@ -1,8 +1,9 @@
-import uuid
 from itertools import product
 import os
-from trainer import Trainer
+import uuid
+
 from parser import parse, get_name
+from trainer import Trainer
 
 os.environ["DATADIR"] = "./data"
 

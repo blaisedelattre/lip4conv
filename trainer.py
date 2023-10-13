@@ -1,16 +1,14 @@
 """Train CIFAR10 with PyTorch."""
+import os
+import time
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
-
 import torchvision
 import torchvision.transforms as transforms
-
-import os
-import argparse
-import time
 
 from resnet import *
 import utils
