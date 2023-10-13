@@ -463,7 +463,7 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
     cout, cin, k, k2 = X.shape
     if k != k2:  # verify if kernel is square
         raise ValueError("The last 2 dim of the kernel must be equal.")
-    if not k[-1] % 2 == 1:  # verify if kernel have odd shape
+    if not k % 2 == 1:  # verify if kernel have odd shape
         raise ValueError("The dimension of the kernel must be odd.")
     device = X.device
     n_sample = n_iter
