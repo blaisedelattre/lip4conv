@@ -12,7 +12,7 @@ import torchvision.transforms as transforms
 
 from resnet import *
 import utils
-from lip_conv import bounds
+import bounds
 
 
 class Trainer:
