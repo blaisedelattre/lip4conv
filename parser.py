@@ -6,10 +6,11 @@ def parse():
     parser.add_argument("--lr", default=0.001, type=float, help="learning rate")
     parser.add_argument(
         "--bound",
-        default="ours_backward",
+        default="delattre2023_backward",
         type=str,
         help="type of bound",
         choices=[
+            "delattre2023_backward",
             "ours_backward",
             "araujo2021",
             "sedghi2019",
