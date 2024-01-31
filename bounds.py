@@ -38,10 +38,10 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
     """
 
     if name_func == "delattre2024":
-        sigma = compute_ours2024(X, n=n, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["delattre2023"]:
+        sigma = compute_delattre2024(X, n=n, n_iter=n_iter, return_time=return_time)
+    elif name_func == "delattre2023":
         sigma = compute_delattre2023(X, n=n, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["delattre2023_backward"]:
+    elif name_func == "delattre2023_backward":
         sigma = compute_delattre2023_backward(
             X, n=n, n_iter=n_iter, return_time=return_time
         )
@@ -83,9 +83,9 @@ def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
         If `return_time` is True, it returns the computational time.
     """
 
-    if name_func in ["gi"]:
+    if name_func == "gi":
         sigma = gram_iteration_on_matrix(X, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["gi_backward"]:
+    elif name_func == "gi_backward":
         sigma = gram_iteration_on_matrix_explicit_backward(
             X, n_iter=n_iter, return_time=return_time
         )
@@ -102,11 +102,11 @@ def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
 ###############################################################################
 
 
-def compute_ours2024(X, n=None, n_iter=4, return_time=True):
-    """Estimate spectral norm of convolutional layer with our method
+def compute_delattre2024(X, n=None, n_iter=4, return_time=True):
+    """Estimate spectral norm of convolutional layer with Delattre2024.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer  with zero padding using Gram iteration
+    the convolutional layer with zero padding using Delattre2024.
 
     Parameters
     ----------
@@ -123,6 +123,12 @@ def compute_ours2024(X, n=None, n_iter=4, return_time=True):
         Largest singular value.
     time : float
         If `return_time` is True, it returns the computational time.
+
+    References
+    ----------
+    .. [1] `Spectral Norm of Convolutional Layers with Circular and Zero Paddings
+        <TODO>`_
+        TODO, arXiv, 2024
     """
     cout, cin, k, _ = X.shape
     if n is None:

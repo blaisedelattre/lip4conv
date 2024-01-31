@@ -3,7 +3,8 @@ import torch.nn.functional as F
 
 
 def compute_spectral_rescaling_dense(M, n_iter=1):
-    n_iter = max(n_iter, 1)
+    if n_iter < 1:
+        raise ValueError(f"n_iter must be at least equal to 1, got {n_iter}")
     log_curr_norm = 0
     inverse_power = 2**(-n_iter)
     for _ in range(n_iter):
@@ -19,7 +20,8 @@ def compute_spectral_rescaling_dense(M, n_iter=1):
 
 
 def compute_spectral_rescaling_residual_dense_with_q(M, q, q_inv, n_iter=1):
-    n_iter = max(n_iter, 1)
+    if n_iter < 1:
+        raise ValueError(f"n_iter must be at least equal to 1, got {n_iter}")
     log_curr_norm = 0
     inverse_power = 2**(-(n_iter-1))
     for _ in range(n_iter):
