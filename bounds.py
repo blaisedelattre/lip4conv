@@ -37,7 +37,7 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
         If `return_time` is True, it returns the computational time.
     """
 
-    if name_func in ["norm2toep"]:
+    if name_func == "delattre2024":
         sigma = compute_ours2024(X, n=n, n_iter=n_iter, return_time=return_time)
     elif name_func in ["delattre2023"]:
         sigma = compute_delattre2023(X, n=n, n_iter=n_iter, return_time=return_time)
