@@ -6,6 +6,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from spectral_rescaling import compute_spectral_rescaling_conv
+
 
 ###############################################################################
 
@@ -35,9 +37,11 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
         If `return_time` is True, it returns the computational time.
     """
 
-    if name_func in ["ours", "delattre2023"]:
+    if name_func in ["norm2toep"]:
+        sigma = compute_ours2024(X, n=n, n_iter=n_iter, return_time=return_time)
+    elif name_func in ["delattre2023"]:
         sigma = compute_delattre2023(X, n=n, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["ours_backward", "delattre2023_backward"]:
+    elif name_func in ["delattre2023_backward"]:
         sigma = compute_delattre2023_backward(
             X, n=n, n_iter=n_iter, return_time=return_time
         )
@@ -51,7 +55,6 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
         sigma = compute_ryu_2019(X, n=n, n_iter=n_iter, return_time=return_time)
     else:
         print(name_func, "method not implemented")
-
     return sigma
 
 
@@ -80,9 +83,9 @@ def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
         If `return_time` is True, it returns the computational time.
     """
 
-    if name_func in ["ours", "gi"]:
+    if name_func in ["gi"]:
         sigma = gram_iteration_on_matrix(X, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["ours_backward", "gi_backward"]:
+    elif name_func in ["gi_backward"]:
         sigma = gram_iteration_on_matrix_explicit_backward(
             X, n_iter=n_iter, return_time=return_time
         )
@@ -92,6 +95,51 @@ def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
         print(name_func, "method not implemented")
 
     return sigma
+
+
+###############################################################################
+# Ours 2024
+###############################################################################
+
+
+def compute_ours2024(X, n=None, n_iter=4, return_time=True):
+    """Estimate spectral norm of convolutional layer with our method
+
+    From a convolutional filter, this function estimates the spectral norm of
+    the convolutional layer  with zero padding using Gram iteration
+
+    Parameters
+    ----------
+    X : ndarray, shape (cout, cint, h, w)
+        Convolutional filter.
+    n_iter : int, default=4
+        Number of iterations.
+    return_time : bool, default True
+        Return computational time.
+
+    Returns
+    -------
+    sigma : float
+        Largest singular value.
+    time : float
+        If `return_time` is True, it returns the computational time.
+    """
+    cout, cin, k, _ = X.shape
+    if n is None:
+        n = k
+    if cin > cout:
+        X = X.transpose(0, 1)
+        cin, cout = cout, cin
+    start_time = time.time()
+    rescale_weights = compute_spectral_rescaling_conv(X, n_iter)
+    sigma = rescale_weights.max()
+    total_time = time.time() - start_time
+
+    if return_time:
+        return sigma, total_time
+    else:
+        return sigma
+
 
 
 ###############################################################################
