@@ -3,6 +3,22 @@ import torch.nn.functional as F
 
 
 def compute_spectral_rescaling_dense(M, n_iter=1):
+    """
+    Compute the spectral rescaling weights for a given matrix.
+
+    Parameters:
+    - M (torch.Tensor): Input matrix for which spectral rescaling weights are computed.
+    - n_iter (int, optional): Number of iterations for spectral rescaling. Default is 1.
+
+    Returns:
+    - torch.Tensor: Spectral rescaling weights t for each row of the input matrix.
+
+    Raises:
+    - ValueError: If n_iter is less than 1.
+
+    Spectral rescaling aims to normalize the spectral norm of the matrix M iteratively. 
+
+    """
     if n_iter < 1:
         raise ValueError(f"n_iter must be at least equal to 1, got {n_iter}")
     log_curr_norm = 0
