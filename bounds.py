@@ -12,7 +12,7 @@ from spectral_rescaling import compute_spectral_rescaling_conv
 ###############################################################################
 
 
-def estimate(X, n=32, n_iter=5, name_func="delattre2023", return_time=False):
+def estimate(X, n=32, n_iter=5, name_func="delattre2024", return_time=False):
     """Estimate spectral norm of convolutional layer with a specific method.
 
     From a convolutional filter, this function estimates the spectral norm, ie
@@ -22,6 +22,8 @@ def estimate(X, n=32, n_iter=5, name_func="delattre2023", return_time=False):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
+    n : int, default=32
+        Spatial size of image.
     n_iter : int, default=50
         Number of iterations.
     name_func : string, default="ours"
@@ -267,6 +269,8 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     ----------
     X : ndarray, shape (cout, cint, k, k)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
@@ -279,7 +283,9 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     time : float
         If `return_time` is True, it returns the computational time.
     """
-    cout, cin, _, _ = kernel.shape
+    cout, cin, k, _ = kernel.shape
+    if n is None:
+        n = k
     start_time = time.time()
     if cin > cout:
         kernel = kernel.transpose(0, 1)
@@ -480,7 +486,7 @@ def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
 ###############################################################################
 
 
-def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
+def compute_araujo2021(X, n_iter=50, *, padding=0, device="cuda", return_time=True):
     """Estimate spectral norm of convolutional layer for circular and zero padding 
     with Araujo2021.
 
@@ -495,6 +501,10 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
         Convolutional filter.
     n_iter : int, default=50
         Number of samples.
+    padding : int, default=0
+        Padding used for convolutional layer.
+    device : str, default="cuda"
+        Device use for computation.
     return_time : bool, default True
         Return computational time.
 
@@ -513,6 +523,7 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
         A Araujo, B Negrevergne, Y Chevaleyre & Jamal Atif, AAAI, 2021
     .. [2] https://github.com/MILES-PSL/Upper-Bound-Lipschitz-Convolutional-Layers/blob/master/lipschitz_bound/lipschitz_bound.py
     """
+    cuda = device == "cuda"
     cout, cin, k, k2 = X.shape
     if k != k2:  # verify if kernel is square
         raise ValueError("The last 2 dim of the kernel must be equal.")
@@ -580,7 +591,7 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
 ###############################################################################
 
 
-def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
+def compute_sedghi_2019(X, n=None, return_time=True):
     """Estimate spectral norm of convolutional layer with Sedghi2019 for circular padding.
 
     From a convolutional filter, this function estimates the spectral norm of
@@ -592,6 +603,8 @@ def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     return_time : bool, default True
         Return computational time.
 
@@ -609,7 +622,9 @@ def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
         H Sedghi, V Gupta & P M Long, ICLR, 2019
     .. [2] https://github.com/brain-research/conv-sv/blob/master/conv2d_singular_values.py
     """
-    cout, cin, _, _ = X.shape
+    cout, cin, k, _ = X.shape
+    if n is None:
+        n = k
     start_time = time.time()
     X = torch.permute(X, (2, 3, 0, 1))
     fft_X = torch.fft.fft2(X, s=(n, n), dim=(0, 1))
@@ -632,7 +647,7 @@ def normalize(arr):
     return arr / (norm + 1e-12)
 
 
-def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
+def compute_ryu_2019(X, n, n_iter=100, return_time=True):
     """Estimate spectral norm of convolutional layer with zero padding Ryu2019.
 
     From a convolutional filter, this function estimates the spectral norm of
@@ -644,6 +659,8 @@ def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     n_iter : int, default=100
         Number of iterations.
     return_time : bool, default True
@@ -666,7 +683,9 @@ def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
 
     """
     start_time = time.time()
-    cout, cin, _, _ = X.shape
+    cout, cin, k, _ = X.shape
+    if n is None:
+        n = k
     input_size = (1, cin, n, n)
     u = torch.randn(input_size, dtype=X.dtype, device=X.device)
     u = u / u.norm(p=2)
