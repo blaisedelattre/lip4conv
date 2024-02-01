@@ -111,8 +111,6 @@ def compute_delattre2024(X, n_iter=4, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, k, k)
         Convolutional filter.
-    n : None | int, default=None
-        TODO. If None, n is set equal to k.
     n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
@@ -161,6 +159,8 @@ def compute_delattre2023(X, n=None, n_iter=4, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, k, k)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True

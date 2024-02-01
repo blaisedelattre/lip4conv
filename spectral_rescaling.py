@@ -53,7 +53,8 @@ def compute_spectral_rescaling_residual_dense_with_q(M, q, q_inv, n_iter=1):
 
 
 def compute_spectral_rescaling_residual_conv_with_q(kernel, q, q_inv, n_iter=1):
-    n_iter = max(n_iter, 1)
+    if n_iter < 1:
+        raise ValueError(f"n_iter must be at least equal to 1, got {n_iter}")
     effective_iter = 0
     kkt = kernel
     log_curr_norm = 0
@@ -73,7 +74,8 @@ def compute_spectral_rescaling_residual_conv_with_q(kernel, q, q_inv, n_iter=1):
 
 
 def compute_spectral_rescaling_conv(kernel, n_iter=1):
-    n_iter = max(n_iter, 1)
+    if n_iter < 1:
+        raise ValueError(f"n_iter must be at least equal to 1, got {n_iter}")
     effective_iter = 0
     kkt = kernel
     log_curr_norm = 0
