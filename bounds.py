@@ -26,7 +26,7 @@ def estimate(X, n=32, n_iter=5, name_func="delattre2024", return_time=False):
         Spatial size of image.
     n_iter : int, default=50
         Number of iterations.
-    name_func : string, default="ours"
+    name_func : string, default="delattre2024"
         Name of the method.
     return_time : bool, default True
         Return computational time.
@@ -72,7 +72,7 @@ def estimate_dense(X, n_iter=5, name_func="gi", return_time=False):
         Matrix.
     n_iter : int, default=5
         Number of iterations.
-    name_func : string, default="ours"
+    name_func : string, default="gi"
         Name of the method.
     return_time : bool, default True
         Return computational time.
