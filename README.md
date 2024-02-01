@@ -15,7 +15,7 @@ It exhibits SOTA results on GPU regarding spectral norm computations.
 
 * `note_book_test_gram_iteration.ipynb` contains some examples of spectral norm bound computations for different methods on dense and convolutional layers.
 
-* `train_local.py` contains code to launch a training. Start a default configuration run  `python train_local.py --bound ours_backward --bound_n_iter 6 --lr 0.1 --r 0.1`
+* `train_local.py` contains code to launch a training. Start a default configuration run  `python train_local.py --bound delattre2023 --bound_n_iter 6 --lr 0.1 --r 0.1`
 
 ## Installation
 
