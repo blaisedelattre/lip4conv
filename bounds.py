@@ -155,7 +155,7 @@ def compute_delattre2023(X, n=None, n_iter=4, return_time=True):
     """Estimate spectral norm of convolutional layer with Delattre2023.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using [Section.3, Algo. 3] Delattre2023.
+    the convolutional layer for circular padding using [Section.3, Algo. 3] Delattre2023.
 
     Parameters
     ----------
@@ -260,8 +260,8 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     """Estimate spectral norm of convolutional layer with Delattre2023.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Delattre2023, with explicit bacward
-    implementation.
+    the convolutional layer for circular padding using 
+    [Section.3, Algo. 3] Delattre2023, with explicit backward implementation.
 
     Parameters
     ----------
@@ -389,7 +389,8 @@ def gram_iteration_on_matrix_explicit_backward(M, n_iter=100, return_time=True):
 
 
 def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
-    """Estimate spectral norm of convolutional layer with Singla2021.
+    """Estimate spectral norm of convolutional layer with circular padding 
+    with Singla2021.
 
     From a convolutional filter, this function estimates the spectral norm of
     the convolutional layer using Singla2021 [1]_.
@@ -480,7 +481,8 @@ def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
 
 
 def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
-    """Estimate spectral norm of convolutional layer with Araujo2021.
+    """Estimate spectral norm of convolutional layer for circular and zero padding 
+    with Araujo2021.
 
     From a convolutional filter, this function estimates the spectral norm of
     the convolutional layer using Araujo2021 [1]_.
@@ -579,7 +581,7 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
 
 
 def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
-    """Estimate spectral norm of convolutional layer with Sedghi2019.
+    """Estimate spectral norm of convolutional layer with Sedghi2019 for circular padding.
 
     From a convolutional filter, this function estimates the spectral norm of
     the convolutional layer using Sedghi2019 [1]_.
@@ -631,7 +633,7 @@ def normalize(arr):
 
 
 def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
-    """Estimate spectral norm of convolutional layer with Ryu2019.
+    """Estimate spectral norm of convolutional layer with zero padding Ryu2019.
 
     From a convolutional filter, this function estimates the spectral norm of
     the convolutional layer using Ryu2019 [1]_ or Farnia2019.
