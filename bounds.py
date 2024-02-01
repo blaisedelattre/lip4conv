@@ -54,7 +54,7 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
     elif name_func == "ryu2019":
         sigma = compute_ryu_2019(X, n=n, n_iter=n_iter, return_time=return_time)
     else:
-        print(name_func, "method not implemented")
+        raise ValueError(f"{name_func} method not implemented")
     return sigma
 
 
@@ -110,8 +110,10 @@ def compute_delattre2024(X, n=None, n_iter=4, return_time=True):
 
     Parameters
     ----------
-    X : ndarray, shape (cout, cint, h, w)
+    X : ndarray, shape (cout, cint, k, k)
         Convolutional filter.
+    n : None | int, default=None
+        TODO. If None, n is set equal to k.
     n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
