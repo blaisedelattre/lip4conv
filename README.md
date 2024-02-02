@@ -1,9 +1,8 @@
 # Efficient Bound of Lipschitz Constant for Convolutional Layers by Gram Iteration
 
-This repository contains the code for the papers [Spectral Norm of Convolutional Layers with Circular and Zero Paddings](https://arxiv.org/abs/2402.00240) 
-by Blaise Delattre, [Quentin Barthélemy](https://github.com/qbarthelemy), Alexandre Allauzen
-and [Efficient Bound of Lipschitz Constant for Convolutional Layers by Gram Iteration](https://arxiv.org/abs/2305.16173)
-published at ICML 2023 by Blaise Delattre, [Quentin Barthélemy](https://github.com/qbarthelemy), [Alexandre Araujo](https://github.com/araujoalexandre) and Alexandre Allauzen.
+This repository contains the code for the following articles:
+- [Spectral Norm of Convolutional Layers with Circular and Zero Paddings](https://arxiv.org/abs/2402.00240) by Blaise Delattre, [Quentin Barthélemy](https://github.com/qbarthelemy), Alexandre Allauzen
+- [Efficient Bound of Lipschitz Constant for Convolutional Layers by Gram Iteration](https://arxiv.org/abs/2305.16173) published at ICML 2023 by Blaise Delattre, [Quentin Barthélemy](https://github.com/qbarthelemy), [Alexandre Araujo](https://github.com/araujoalexandre) and Alexandre Allauzen.
 
 Gram iteration is a deterministic method to compute spectral norm in quadratic convergence.
 It exhibits SOTA results on GPU regarding spectral norm computations.

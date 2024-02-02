@@ -128,8 +128,8 @@ def compute_delattre2024(X, n_iter=4, return_time=True):
     References
     ----------
     .. [1] `Spectral Norm of Convolutional Layers with Circular and Zero Paddings
-        <TODO>`_
-        TODO, arXiv, 2024
+        <https://arxiv.org/abs/2402.00240>`_
+        B Delattre, Q Barthélemy & A Allauzen, arXiv, 2024
     """
     cout, cin, _, _ = X.shape
     if cin > cout:
@@ -287,7 +287,7 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     ----------
     .. [1] `Efficient Bound of Lipschitz Constant for Convolutional Layers
         by Gram Iteration
-        <TODO>`_
+        <https://arxiv.org/abs/2305.16173>`_
         B Delattre, Q Barthélemy, A Araujo & A Allauzen, ICML, 2023
     """
     cout, cin, k, _ = kernel.shape
@@ -653,7 +653,7 @@ def normalize(arr):
 
 
 def compute_ryu_2019(X, n, n_iter=100, return_time=True):
-    """Estimate spectral norm of convolutional layer Ryu2019.
+    """Estimate spectral norm of convolutional layer with Ryu2019.
 
     From a convolutional filter, this function estimates the spectral norm of
     the convolutional layer for zero padding using Ryu2019 [1]_ or Farnia2019.
