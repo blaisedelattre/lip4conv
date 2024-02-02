@@ -664,7 +664,7 @@ def compute_ryu_2019(X, n, n_iter=100, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
-    n : None | int, default=None
+    n : None | int
         Size of input image. If None, n is set equal to k.
     n_iter : int, default=100
         Number of iterations.
