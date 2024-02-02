@@ -6,11 +6,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from spectral_rescaling import compute_spectral_rescaling_conv
+
 
 ###############################################################################
 
 
-def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
+def estimate(X, n=32, n_iter=5, name_func="delattre2024", return_time=False):
     """Estimate spectral norm of convolutional layer with a specific method.
 
     From a convolutional filter, this function estimates the spectral norm, ie
@@ -20,9 +22,11 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
+    n : int, default=32
+        Spatial size of image.
     n_iter : int, default=50
         Number of iterations.
-    name_func : string, default="ours"
+    name_func : string, default="delattre2024"
         Name of the method.
     return_time : bool, default True
         Return computational time.
@@ -35,9 +39,11 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
         If `return_time` is True, it returns the computational time.
     """
 
-    if name_func in ["ours", "delattre2023"]:
+    if name_func == "delattre2024":
+        sigma = compute_delattre2024(X, n_iter=n_iter, return_time=return_time)
+    elif name_func == "delattre2023":
         sigma = compute_delattre2023(X, n=n, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["ours_backward", "delattre2023_backward"]:
+    elif name_func == "delattre2023_backward":
         sigma = compute_delattre2023_backward(
             X, n=n, n_iter=n_iter, return_time=return_time
         )
@@ -50,12 +56,11 @@ def estimate(X, n=32, n_iter=5, name_func="ours", return_time=False):
     elif name_func == "ryu2019":
         sigma = compute_ryu_2019(X, n=n, n_iter=n_iter, return_time=return_time)
     else:
-        print(name_func, "method not implemented")
-
+        raise ValueError(f"{name_func} method not implemented")
     return sigma
 
 
-def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
+def estimate_dense(X, n_iter=5, name_func="gi", return_time=False):
     """Estimate spectral norm of dense layer with a specific method.
 
     From a matrix, this function estimates the spectral norm, ie the largest
@@ -67,7 +72,7 @@ def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
         Matrix.
     n_iter : int, default=5
         Number of iterations.
-    name_func : string, default="ours"
+    name_func : string, default="gi"
         Name of the method.
     return_time : bool, default True
         Return computational time.
@@ -80,18 +85,65 @@ def estimate_dense(X, n_iter=5, name_func="ours", return_time=False):
         If `return_time` is True, it returns the computational time.
     """
 
-    if name_func in ["ours", "gi"]:
+    if name_func == "gi":
         sigma = gram_iteration_on_matrix(X, n_iter=n_iter, return_time=return_time)
-    elif name_func in ["ours_backward", "gi_backward"]:
+    elif name_func == "gi_backward":
         sigma = gram_iteration_on_matrix_explicit_backward(
             X, n_iter=n_iter, return_time=return_time
         )
     elif name_func == "pi":
         sigma = compute_pm_dense(X, n_iter=n_iter, return_time=return_time)
     else:
-        print(name_func, "method not implemented")
-
+        raise ValueError(f"{name_func} method not implemented")
     return sigma
+
+
+###############################################################################
+# Delattre2024
+###############################################################################
+
+
+def compute_delattre2024(X, n_iter=4, return_time=True):
+    """Estimate spectral norm of convolutional layer with Delattre2024.
+
+    From a convolutional filter, this function estimates the spectral norm of
+    the convolutional layer with zero padding using Delattre2024 [1]_.
+
+    Parameters
+    ----------
+    X : ndarray, shape (cout, cint, k, k)
+        Convolutional filter.
+    n_iter : int, default=4
+        Number of iterations.
+    return_time : bool, default True
+        Return computational time.
+
+    Returns
+    -------
+    sigma : float
+        Largest singular value.
+    time : float
+        If `return_time` is True, it returns the computational time.
+
+    References
+    ----------
+    .. [1] `Spectral Norm of Convolutional Layers with Circular and Zero Paddings
+        <https://arxiv.org/abs/2402.00240>`_
+        B Delattre, Q Barthélemy & A Allauzen, arXiv, 2024
+    """
+    cout, cin, _, _ = X.shape
+    if cin > cout:
+        X = X.transpose(0, 1)
+    start_time = time.time()
+    rescale_weights = compute_spectral_rescaling_conv(X, n_iter)
+    sigma = rescale_weights.max()
+    total_time = time.time() - start_time
+
+    if return_time:
+        return sigma, total_time
+    else:
+        return sigma
+
 
 
 ###############################################################################
@@ -103,12 +155,14 @@ def compute_delattre2023(X, n=None, n_iter=4, return_time=True):
     """Estimate spectral norm of convolutional layer with Delattre2023.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Delattre2023.
+    the convolutional layer for circular padding using [Section.3, Algo. 3] Delattre2023.
 
     Parameters
     ----------
-    X : ndarray, shape (cout, cint, h, w)
+    X : ndarray, shape (cout, cint, k, k)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
@@ -208,13 +262,15 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
     """Estimate spectral norm of convolutional layer with Delattre2023.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Delattre2023, with explicit bacward
-    implementation.
+    the convolutional layer for circular padding using 
+    [Section.3, Algo. 3] Delattre2023 [1]_, with explicit backward implementation.
 
     Parameters
     ----------
-    X : ndarray, shape (cout, cint, h, w)
+    X : ndarray, shape (cout, cint, k, k)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     n_iter : int, default=4
         Number of iterations.
     return_time : bool, default True
@@ -226,8 +282,17 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
         Largest singular value.
     time : float
         If `return_time` is True, it returns the computational time.
+
+    References
+    ----------
+    .. [1] `Efficient Bound of Lipschitz Constant for Convolutional Layers
+        by Gram Iteration
+        <https://arxiv.org/abs/2305.16173>`_
+        B Delattre, Q Barthélemy, A Araujo & A Allauzen, ICML, 2023
     """
-    cout, cin, _, _ = kernel.shape
+    cout, cin, k, _ = kernel.shape
+    if n is None:
+        n = k
     start_time = time.time()
     if cin > cout:
         kernel = kernel.transpose(0, 1)
@@ -248,7 +313,7 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
 ###############################################################################
 
 
-def gram_iteration_on_matrix(M, n_iter=100, n=10, eps=1e-8, return_time=True):
+def gram_iteration_on_matrix(M, n_iter=100, return_time=True):
     """Gram iteration on matrix, ie dense layer."""
     n, m = M.shape
     if m > n:
@@ -256,7 +321,7 @@ def gram_iteration_on_matrix(M, n_iter=100, n=10, eps=1e-8, return_time=True):
     inverse_power = 1
     log_curr_norm = 0
     start = time.time()
-    for iter in range(n_iter):
+    for _ in range(n_iter):
         M_norm = M.norm()
         M = M / M_norm
         M = M.T.mm(M)
@@ -340,7 +405,7 @@ def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
     """Estimate spectral norm of convolutional layer with Singla2021.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Singla2021 [1]_.
+    the convolutional layer for circular padding using Singla2021 [1]_.
 
     Code adapted from [2]_.
 
@@ -412,8 +477,7 @@ def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
     sigma4 = torch.mv(v4.unsqueeze(0), torch.mv(matrix4, u4))
 
     sigma = math.sqrt(h * w) * (
-        torch.min(torch.min(torch.min(sigma1, sigma2), sigma3), sigma4)
-        # torch.min(sigma1, sigma2, sigma3, sigma4)  #TODO
+        torch.min(torch.stack([sigma1, sigma2, sigma3, sigma4]))
     )
     total_time = time.time() - start_time
 
@@ -428,11 +492,11 @@ def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
 ###############################################################################
 
 
-def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
+def compute_araujo2021(X, n_iter=50, *, padding=0, device="cuda", return_time=True):
     """Estimate spectral norm of convolutional layer with Araujo2021.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Araujo2021 [1]_.
+    the convolutional layer for circular and zero padding using Araujo2021 [1]_.
 
     Code taken from [2]_, algo LipGrid with v2 implementation.
 
@@ -442,6 +506,10 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
         Convolutional filter.
     n_iter : int, default=50
         Number of samples.
+    padding : int, default=0
+        Padding used for convolutional layer.
+    device : str, default="cuda"
+        Device use for computation.
     return_time : bool, default True
         Return computational time.
 
@@ -460,6 +528,7 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
         A Araujo, B Negrevergne, Y Chevaleyre & Jamal Atif, AAAI, 2021
     .. [2] https://github.com/MILES-PSL/Upper-Bound-Lipschitz-Convolutional-Layers/blob/master/lipschitz_bound/lipschitz_bound.py
     """
+    cuda = device == "cuda"
     cout, cin, k, k2 = X.shape
     if k != k2:  # verify if kernel is square
         raise ValueError("The last 2 dim of the kernel must be equal.")
@@ -527,11 +596,11 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, cuda=True, return_time=True):
 ###############################################################################
 
 
-def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
+def compute_sedghi_2019(X, n=None, return_time=True):
     """Estimate spectral norm of convolutional layer with Sedghi2019.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Sedghi2019 [1]_.
+    the convolutional layer for circular padding using Sedghi2019 [1]_.
 
     Code adapted from [2]_.
 
@@ -539,6 +608,8 @@ def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
+    n : None | int, default=None
+        Size of input image. If None, n is set equal to k.
     return_time : bool, default True
         Return computational time.
 
@@ -556,7 +627,9 @@ def compute_sedghi_2019(X, n=None, n_iter=None, return_time=True):
         H Sedghi, V Gupta & P M Long, ICLR, 2019
     .. [2] https://github.com/brain-research/conv-sv/blob/master/conv2d_singular_values.py
     """
-    cout, cin, _, _ = X.shape
+    cout, cin, k, _ = X.shape
+    if n is None:
+        n = k
     start_time = time.time()
     X = torch.permute(X, (2, 3, 0, 1))
     fft_X = torch.fft.fft2(X, s=(n, n), dim=(0, 1))
@@ -579,11 +652,11 @@ def normalize(arr):
     return arr / (norm + 1e-12)
 
 
-def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
+def compute_ryu_2019(X, n, n_iter=100, return_time=True):
     """Estimate spectral norm of convolutional layer with Ryu2019.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Ryu2019 [1]_ or Farnia2019.
+    the convolutional layer for zero padding using Ryu2019 [1]_ or Farnia2019.
 
     Code adapted from [2]_.
 
@@ -591,6 +664,8 @@ def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
     ----------
     X : ndarray, shape (cout, cint, h, w)
         Convolutional filter.
+    n : None | int
+        Size of input image. If None, n is set equal to k.
     n_iter : int, default=100
         Number of iterations.
     return_time : bool, default True
@@ -613,7 +688,9 @@ def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
 
     """
     start_time = time.time()
-    cout, cin, _, _ = X.shape
+    cout, cin, k, _ = X.shape
+    if n is None:
+        n = k
     input_size = (1, cin, n, n)
     u = torch.randn(input_size, dtype=X.dtype, device=X.device)
     u = u / u.norm(p=2)
@@ -638,7 +715,7 @@ def compute_ryu_2019(X, n, n_iter=100, eps=1e-8, return_time=True):
 ###############################################################################
 
 
-def compute_pm_dense(M, n_iter=50, n=10, eps=1e-8, return_time=True):
+def compute_pm_dense(M, n_iter=50, return_time=True):
     """Power iteration for matrix, ie dense layer."""
     u = torch.rand(M.shape[1], dtype=M.dtype, device=M.device)
     start = time.time()
