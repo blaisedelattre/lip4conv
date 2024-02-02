@@ -107,7 +107,7 @@ def compute_delattre2024(X, n_iter=4, return_time=True):
     """Estimate spectral norm of convolutional layer with Delattre2024.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer with zero padding using Delattre2024.
+    the convolutional layer with zero padding using Delattre2024 [1]_.
 
     Parameters
     ----------
@@ -263,7 +263,7 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
 
     From a convolutional filter, this function estimates the spectral norm of
     the convolutional layer for circular padding using 
-    [Section.3, Algo. 3] Delattre2023, with explicit backward implementation.
+    [Section.3, Algo. 3] Delattre2023 [1]_, with explicit backward implementation.
 
     Parameters
     ----------
@@ -282,6 +282,13 @@ def compute_delattre2023_backward(kernel, n, n_iter=4, return_time=False):
         Largest singular value.
     time : float
         If `return_time` is True, it returns the computational time.
+
+    References
+    ----------
+    .. [1] `Efficient Bound of Lipschitz Constant for Convolutional Layers
+        by Gram Iteration
+        <TODO>`_
+        B Delattre, Q Barthélemy, A Araujo & A Allauzen, ICML, 2023
     """
     cout, cin, k, _ = kernel.shape
     if n is None:
@@ -395,11 +402,10 @@ def gram_iteration_on_matrix_explicit_backward(M, n_iter=100, return_time=True):
 
 
 def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
-    """Estimate spectral norm of convolutional layer with circular padding 
-    with Singla2021.
+    """Estimate spectral norm of convolutional layer with Singla2021.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Singla2021 [1]_.
+    the convolutional layer for circular padding using Singla2021 [1]_.
 
     Code adapted from [2]_.
 
@@ -487,11 +493,10 @@ def compute_singla2021(X, n_iter=50, return_time=True, device="cuda"):
 
 
 def compute_araujo2021(X, n_iter=50, *, padding=0, device="cuda", return_time=True):
-    """Estimate spectral norm of convolutional layer for circular and zero padding 
-    with Araujo2021.
+    """Estimate spectral norm of convolutional layer with Araujo2021.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Araujo2021 [1]_.
+    the convolutional layer for circular and zero padding using Araujo2021 [1]_.
 
     Code taken from [2]_, algo LipGrid with v2 implementation.
 
@@ -592,10 +597,10 @@ def compute_araujo2021(X, n_iter=50, *, padding=0, device="cuda", return_time=Tr
 
 
 def compute_sedghi_2019(X, n=None, return_time=True):
-    """Estimate spectral norm of convolutional layer with Sedghi2019 for circular padding.
+    """Estimate spectral norm of convolutional layer with Sedghi2019.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Sedghi2019 [1]_.
+    the convolutional layer for circular padding using Sedghi2019 [1]_.
 
     Code adapted from [2]_.
 
@@ -648,10 +653,10 @@ def normalize(arr):
 
 
 def compute_ryu_2019(X, n, n_iter=100, return_time=True):
-    """Estimate spectral norm of convolutional layer with zero padding Ryu2019.
+    """Estimate spectral norm of convolutional layer Ryu2019.
 
     From a convolutional filter, this function estimates the spectral norm of
-    the convolutional layer using Ryu2019 [1]_ or Farnia2019.
+    the convolutional layer for zero padding using Ryu2019 [1]_ or Farnia2019.
 
     Code adapted from [2]_.
 
