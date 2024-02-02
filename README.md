@@ -1,4 +1,4 @@
-# Efficient Bound of Lipschitz Constant for Convolutional Layers by Gram Iteration
+# Spectral Norms and Lipschitz Bounds for Convolutional Layers
 
 This repository contains the code for the following articles:
 - [Spectral Norm of Convolutional Layers with Circular and Zero Paddings](https://arxiv.org/abs/2402.00240) by Blaise Delattre, [Quentin Barthélemy](https://github.com/qbarthelemy), Alexandre Allauzen
